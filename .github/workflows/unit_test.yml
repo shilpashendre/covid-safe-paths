@@ -1,4 +1,4 @@
-name: Jest Test Runner
+name: Unit test
 
 on:
   push:
@@ -8,20 +8,26 @@ on:
 
 jobs:
   build:
+    # strategy:
+    #   matrix:
+    #     node-version: [12, 13] # TODO
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [12.x, 13.x]
-
     steps:
     - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+    - run: node --version
+
+    - name: Cache node_modules/
+      uses: actions/cache@v1
       with:
-        node-version: ${{ matrix.node-version }}
-    - run: yarn
+        path: node_modules
+        key: ${{ runner.OS }}-yarn-cache-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.OS }}-yarn-cache-
+
+    - run: yarn --frozen-lockfile
+
     - run: yarn test
       env:
         CI: true
