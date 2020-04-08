@@ -36,7 +36,7 @@ const base64 = RNFetchBlob.base64;
 // first Google Doc holding data (https://docs.google.com/spreadsheets/d/1itaohdPiAeniCXNlntNztZ_oRvjh0HsGuJXUJWET008/edit#gid=0)
 // points to this souce but no longer holds the actual data.
 const public_data =
-  'https://raw.githubusercontent.com/beoutbreakprepared/nCoV2019/master/latest_data/latestdata.csv';
+  'https://raw.githubusercontent.com/PrivateKit/private-kit/datasets/latestdata_trimmed.csv';
 const show_button_text = languages.t('label.show_overlap');
 const overlap_true_button_text = languages.t(
   'label.overlap_found_button_label',
@@ -134,8 +134,8 @@ function OverlapScreen() {
           setInitialRegion({
             latitude,
             longitude,
-            latitudeDelta: 10.10922,
-            longitudeDelta: 10.20421,
+            latitudeDelta: 0.10922,
+            longitudeDelta: 0.20421,
           });
           populateMarkers([
             {
@@ -218,8 +218,8 @@ function OverlapScreen() {
 
       for (var i = rows.length - 1; i >= 0; i--) {
         var row = rows[i].split(',');
-        const lat = parseFloat(row[7]);
-        const long = parseFloat(row[8]);
+        const lat = parseFloat(row[1]);
+        const long = parseFloat(row[2]);
         if (!isNaN(lat) && !isNaN(long)) {
           if (true) {
             var key = String(lat) + '|' + String(long);
@@ -239,7 +239,7 @@ function OverlapScreen() {
   plotCircles = async records => {
     try {
       const circles = [];
-      const distThreshold = 2000; //In KMs
+      const distThreshold = 100; //In KMs
       const latestLat = initialRegion.latitude;
       const latestLong = initialRegion.longitude;
       let index = 0;
@@ -259,7 +259,7 @@ function OverlapScreen() {
               latitude: latitude,
               longitude: longitude,
             },
-            radius: 50 * count,
+            radius: 3 * count,
           };
           circles.push(circle);
         }
@@ -332,7 +332,7 @@ function OverlapScreen() {
             key={circle.key}
             center={circle.center}
             radius={circle.radius}
-            fillColor='rgba(163, 47, 163, 0.3)'
+            fillColor='rgba(245, 19, 19, 0.4)'
             zIndex={2}
             strokeWidth={0}
           />
