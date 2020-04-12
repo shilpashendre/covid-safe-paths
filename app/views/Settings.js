@@ -18,7 +18,6 @@ import ButtonWrapper from '../components/ButtonWrapper';
 import NavigationBarWrapper from '../components/NavigationBarWrapper';
 import Colors from '../constants/colors';
 import fontFamily from './../constants/fonts';
-import warning from './../assets/svgs/warning';
 import googleMapsIcon from './../assets/svgs/google-maps-logo';
 import { SvgXml } from 'react-native-svg';
 
@@ -57,6 +56,10 @@ class SettingsScreen extends Component {
 
   chooseProviderScreenButtonPressed() {
     this.props.navigation.navigate('ChooseProviderScreen');
+  }
+
+  visualizeDataPressed() {
+    this.props.navigation.navigate('OverlapScreen');
   }
 
   newsButtonPressed() {
@@ -171,7 +174,15 @@ class SettingsScreen extends Component {
                 null,
                 languages.t('label.choose_provider_subtitle'),
               )}
-              <View style={styles.divider}></View>
+              <View style={styles.divider} />
+              {this.getSettingRow(
+                languages.t('label.visualize_title'),
+                this.visualizeDataPressed,
+                null,
+                null,
+                languages.t('label.visualize_subtitle'),
+              )}
+              <View style={styles.divider} />
               {this.getSettingRow(
                 languages.t('label.news_title'),
                 this.newsButtonPressed,
@@ -179,7 +190,7 @@ class SettingsScreen extends Component {
                 null,
                 languages.t('label.news_subtitle'),
               )}
-              <View style={styles.divider}></View>
+              <View style={styles.divider} />
               {this.getSettingRow(
                 languages.t('label.event_history_title'),
                 this.eventHistoryButtonPressed,
@@ -187,7 +198,7 @@ class SettingsScreen extends Component {
                 null,
                 languages.t('label.event_history_subtitle'),
               )}
-              <View style={styles.divider}></View>
+              <View style={styles.divider} />
               {this.getSettingRow(
                 languages.t('label.tested_positive_title'),
                 this.testedPositiveButtonPressed,
@@ -208,7 +219,7 @@ class SettingsScreen extends Component {
                 languages.t('label.about_title'),
                 this.aboutButtonPressed,
               )}
-              <View style={styles.divider}></View>
+              <View style={styles.divider} />
               {this.getSettingRow(
                 languages.t('label.legal_page_title'),
                 this.licensesButtonPressed,

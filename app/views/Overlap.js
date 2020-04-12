@@ -10,6 +10,7 @@ import {
   Dimensions,
   TouchableOpacity,
   BackHandler,
+  StatusBar,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import WebView from 'react-native-webview';
@@ -19,13 +20,11 @@ import Share from 'react-native-share';
 import colors from '../constants/colors';
 import Button from '../components/Button';
 import { GetStoreData } from '../helpers/General';
-import { convertPointsToString } from '../helpers/convertPointsToString';
-import LocationServices from '../services/LocationService';
 import greenMarker from '../assets/images/user-green.png';
-import backArrow from '../assets/images/backArrow.png';
 import languages from '../locales/languages';
 import CustomCircle from '../helpers/customCircle';
 import fontFamily from '../constants/fonts';
+
 import { PUBLIC_DATA_URL } from '../constants/authorities';
 import { LOCATION_DATA } from '../constants/storage';
 
@@ -53,7 +52,7 @@ const INITIAL_REGION = {
 };
 
 // TODO: This code is functionally duplicated by logic in the areLocationsNearby() function
-//  in Intersect.js.  Not cleaning up right now since for v1.0 this is unused code, but 
+//  in Intersect.js.  Not cleaning up right now since for v1.0 this is unused code, but
 //  should clean this up in the future.
 function distance(lat1, lon1, lat2, lon2) {
   if (lat1 == lat2 && lon1 == lon2) {
@@ -76,7 +75,7 @@ function distance(lat1, lon1, lat2, lon2) {
   }
 }
 
-function OverlapScreen() {
+function OverlapScreen(props) {
   const [region, setRegion] = useState({});
   const [markers, setMarkers] = useState([]);
   const [circles, setCircles] = useState([]);
@@ -87,6 +86,12 @@ function OverlapScreen() {
   const [initialRegion, setInitialRegion] = useState(INITIAL_REGION);
   const { navigate } = useNavigation();
   const mapView = useRef();
+
+  props.navigation.setOptions({
+    headerShown: true,
+    title: 'Map',
+    headerBackTitle: '',
+  });
 
   async function getOverlap() {
     try {
@@ -277,11 +282,11 @@ function OverlapScreen() {
   };
 
   function backToMain() {
-    this.props.navigation.goBack();
+    props.navigation.goBack();
   }
 
   function handleBackPress() {
-    this.props.navigation.goBack();
+    props.navigation.goBack();
     return true;
   }
 
@@ -304,69 +309,66 @@ function OverlapScreen() {
   // including official reports from WHO, Ministries of Health, and Chinese local, provincial, and national
   // health authorities. If additional data are available from reliable online reports, they are included.
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
-          style={styles.backArrowTouchable}
-          onPress={backToMain}>
-          <Image style={styles.backArrow} source={backArrow} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {languages.t('label.overlap_title')}
-        </Text>
-      </View>
-      <MapView
-        ref={mapView}
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        initialRegion={initialRegion}
-        customMapStyle={customMapStyles}>
-        {markers.map(marker => (
-          <Marker
-            key={marker.key}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            description={marker.description}
-            tracksViewChanges={false}
-            image={greenMarker}
-          />
-        ))}
-        {circles.map(circle => (
-          <CustomCircle
-            key={circle.key}
-            center={circle.center}
-            radius={circle.radius}
-            fillColor='rgba(245, 19, 19, 0.4)'
-            zIndex={2}
-            strokeWidth={0}
-          />
-        ))}
-      </MapView>
+    <>
+      <StatusBar
+        barStyle='dark-content'
+        backgroundColor='transparent'
+        translucent
+      />
       <View style={styles.main}>
-        <TouchableOpacity
-          style={styles.buttonTouchable}
-          onPress={downloadAndPlot}
-          disabled={showButton.disabled}>
-          {/* If no overlap found, change button text to say so. Temporary solution, replace with something more robust */}
-          <Text style={styles.buttonText}>{languages.t(showButton.text)}</Text>
-        </TouchableOpacity>
-        <Text style={styles.sectionDescription}>
-          {languages.t('label.overlap_para_1')}
-        </Text>
+        <MapView
+          ref={mapView}
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          initialRegion={initialRegion}
+          customMapStyle={customMapStyles}>
+          {markers.map(marker => (
+            <Marker
+              key={marker.key}
+              coordinate={marker.coordinate}
+              title={marker.title}
+              description={marker.description}
+              tracksViewChanges={false}
+              image={greenMarker}
+            />
+          ))}
+          {circles.map(circle => (
+            <CustomCircle
+              key={circle.key}
+              center={circle.center}
+              radius={circle.radius}
+              fillColor='rgba(245, 19, 19, 0.4)'
+              zIndex={2}
+              strokeWidth={0}
+            />
+          ))}
+        </MapView>
+        {/*<View style={styles.main}>
+          <TouchableOpacity
+            style={styles.buttonTouchable}
+            onPress={downloadAndPlot}
+            disabled={showButton.disabled}>
+            {/* If no overlap found, change button text to say so. Temporary solution, replace with something more robust }
+            <Text style={styles.buttonText}>{languages.t(showButton.text)}</Text>
+          </TouchableOpacity>
+          <Text style={styles.sectionDescription}>
+            {languages.t('label.overlap_para_1')}
+          </Text>
+          </View>*/}
+        <View style={styles.footer}>
+          <Text
+            style={[
+              styles.sectionFooter,
+              { textAlign: 'center', paddingTop: 15, color: 'blue' },
+            ]}
+            onPress={() =>
+              Linking.openURL('https://github.com/beoutbreakprepared/nCoV2019')
+            }>
+            {languages.t('label.nCoV2019_url_info')}{' '}
+          </Text>
+        </View>
       </View>
-      <View style={styles.footer}>
-        <Text
-          style={[
-            styles.sectionFooter,
-            { textAlign: 'center', paddingTop: 15, color: 'blue' },
-          ]}
-          onPress={() =>
-            Linking.openURL('https://github.com/beoutbreakprepared/nCoV2019')
-          }>
-          {languages.t('label.nCoV2019_url_info')}{' '}
-        </Text>
-      </View>
-    </SafeAreaView>
+    </>
   );
 }
 
@@ -374,9 +376,6 @@ const styles = StyleSheet.create({
   // Container covers the entire screen
   container: {
     flex: 1,
-    flexDirection: 'column',
-    color: colors.PRIMARY_TEXT,
-    backgroundColor: colors.WHITE,
   },
   headerTitle: {
     fontSize: 24,
@@ -384,19 +383,9 @@ const styles = StyleSheet.create({
   },
   main: {
     flex: 1,
-    flexDirection: 'column',
-    textAlignVertical: 'top',
-    // alignItems: 'center',
-    padding: 15,
-    width: '96%',
-    alignSelf: 'center',
   },
   map: {
     flex: 1,
-    flexDirection: 'column',
-    padding: 15,
-    width: '96%',
-    alignSelf: 'center',
   },
   buttonTouchable: {
     borderRadius: 12,
