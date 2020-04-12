@@ -151,7 +151,7 @@ if ! found_exe android-studio ; then
         echo "   NOTE: You might need to close and reopent Android Studio the first time to see this."
         echo "   * Under the SDK Platforms tab, click Show Package Details"
         echo "   * Expand the 'Android 9.0 (Pie)' entry"
-        echo "     - Check: Android SDK Platform 29"
+        echo "     - Check: Android SDK Platform 28"
         echo "     - Check: Intel x86 Atom_64 System Image or Google APIs Intel x86 Atom System Image"
         echo "   * Under the SDK Tools tab, check 'Show Package Details'"
         echo "   * Expand the 'Android SDK Build-Tools' entry"
@@ -163,7 +163,7 @@ if ! found_exe android-studio ; then
 
         echo "${BLUE}Adding environment variables to ${YELLOW}~/.profile_mobileapp${RESET}"
 
-        echo "# ==== Added by PrivateKit/mobileapp's dev_setup.sh ====" > ~/.profile_mobileapp
+        echo "# ==== Added by COVID Safe Paths dev_setup.sh ====" > ~/.profile_mobileapp
         if [[ "$OSTYPE" == "darwin"* ]] ; then
             echo "export ANDROID_SDK_ROOT=\$HOME/Library/Android/sdk" >> ~/.profile_mobileapp
         else
@@ -181,6 +181,16 @@ if ! found_exe android-studio ; then
 
         echo "${GREEN}Android Studio installed!${RESET}"
         echo "${YELLOW}You will need to start a new terminal session for this to apply.${RESET}"
+    fi
+fi
+
+# Install ruby bundler and cocoapods for iOS only, because they're only necessary for iOS development
+# Mac OS comes with ruby out of the box.
+if [[ "$OSTYPE" == "darwin"* ]] ; then
+    if ! gem list '^bundler$' -i --version 2.1.4; then
+        echo "${BLUE}Installing Ruby bundler for Cocoapod management...${RESET}"
+        sudo gem install bundler
+        echo "${GREEN}Bundler is installed!${RESET}"
     fi
 fi
 
@@ -202,12 +212,21 @@ if [[ "$OSTYPE" == "darwin"* ]] ; then
 fi
 
 
+if ! found_exe yarn ; then
+    echo "${BLUE}Installing Yarn package manager${RESET}"
+    brew install yarn
+    yarn
+    echo "${GREEN}Yarn installed!${RESET}"
+fi
+
 if ! found_exe react-native ; then
     echo "${BLUE}Installing React Native tool...${RESET}"
-    sudo npm install -g react-native-cli
-    npm install
+    yarn global add react-native-cli
+    yarn
     echo "${GREEN}React Native tools installed!${RESET}"
 fi
+
+git config commit.template ./.gitmessage
 
 
 echo "${GREEN}You are now ready to go!${RESET}"
