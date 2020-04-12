@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {
+  AppState,
   SafeAreaView,
   StyleSheet,
   Linking,
@@ -10,6 +11,8 @@ import {
   Image,
   ScrollView,
   BackHandler,
+  ImageBackground,
+  StatusBar,
 } from 'react-native';
 import {
   Menu,
@@ -17,32 +20,136 @@ import {
   MenuOption,
   MenuTrigger,
 } from 'react-native-popup-menu';
-import colors from '../constants/colors';
+import BackgroundImage from './../assets/images/launchScreenBackground.png';
+import BackgroundImageAtRisk from './../assets/images/backgroundAtRisk.png';
+import Colors from '../constants/colors';
 import LocationServices from '../services/LocationService';
-import BroadcastingServices from '../services/BroadcastingService';
+//import BroadcastingServices from '../services/BroadcastingService';
+import BackgroundTaskServices from '../services/BackgroundTaskService';
+import { checkIntersect } from '../helpers/Intersect';
+
 import BackgroundGeolocation from '@mauron85/react-native-background-geolocation';
 import exportImage from './../assets/images/export.png';
-import news from './../assets/images/newspaper.png';
-import kebabIcon from './../assets/images/kebabIcon.png';
-import pkLogo from './../assets/images/PKLogo.png';
+import ButtonWrapper from '../components/ButtonWrapper';
+import { isPlatformiOS } from './../Util';
+import Pulse from 'react-native-pulse';
+import {
+  check,
+  PERMISSIONS,
+  RESULTS,
+  openSettings,
+} from 'react-native-permissions';
+import foreArrow from './../assets/images/foreArrow.png';
 
 import { GetStoreData, SetStoreData } from '../helpers/General';
-import languages from './../locales/languages';
+import languages from '../locales/languages';
+
+import { SvgXml } from 'react-native-svg';
+import StateAtRisk from './../assets/svgs/stateAtRisk';
+import StateNoContact from './../assets/svgs/stateNoContact';
+import StateUnknown from './../assets/svgs/stateUnknown';
+import SettingsGear from './../assets/svgs/settingsGear';
+import fontFamily from '../constants/fonts';
+import { PARTICIPATE, CROSSED_PATHS } from '../constants/storage';
+
+const StateEnum = {
+  UNKNOWN: 0,
+  AT_RISK: 1,
+  NO_CONTACT: 2,
+};
+
+const StateIcon = ({ title, status, size, ...props }) => {
+  let icon;
+  switch (status) {
+    case StateEnum.UNKNOWN:
+      icon = StateUnknown;
+      break;
+    case StateEnum.AT_RISK:
+      icon = StateAtRisk;
+      break;
+    case StateEnum.NO_CONTACT:
+      icon = StateNoContact;
+      break;
+  }
+  return (
+    <SvgXml xml={icon} width={size ? size : 80} height={size ? size : 80} />
+  );
+};
 
 const width = Dimensions.get('window').width;
+const height = Dimensions.get('window').height;
 
 class LocationTracking extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      appState: AppState.currentState,
+      timer_intersect: null,
       isLogging: '',
+      currentState: StateEnum.NO_CONTACT,
     };
+    try {
+      this.checkCurrentState();
+    } catch (e) {
+      // statements
+      console.log(e);
+    }
+  }
+
+  /*  Check current state
+        1) determine if user has correct location permissions
+        2) check if they are at risk -> checkIfUserAtRisk()
+        3) set state accordingly */
+  checkCurrentState() {
+    // NEED TO TEST ON ANDROID
+    let locationPermission;
+    if (isPlatformiOS()) {
+      locationPermission = PERMISSIONS.IOS.LOCATION_ALWAYS;
+    } else {
+      locationPermission = PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
+    }
+    let locationDisabled = true;
+    check(locationPermission)
+      .then(result => {
+        switch (result) {
+          case RESULTS.GRANTED:
+            LocationServices.start();
+            this.checkIfUserAtRisk();
+            return;
+          case RESULTS.UNAVAILABLE:
+          case RESULTS.BLOCKED:
+            console.log('NO LOCATION');
+            LocationServices.stop();
+            this.setState({ currentState: StateEnum.UNKNOWN });
+        }
+      })
+      .catch(error => {
+        console.log('error checking location: ' + error);
+      });
+  }
+
+  checkIfUserAtRisk() {
+    BackgroundTaskServices.start();
+    // already set on 12h timer, but run when this screen opens too
+    checkIntersect();
+
+    GetStoreData('CROSSED_PATHS').then(dayBin => {
+      dayBin = JSON.parse(dayBin);
+      if (dayBin !== null && dayBin.reduce((a, b) => a + b, 0) > 0) {
+        console.log('Found crossed paths');
+        this.setState({ currentState: StateEnum.AT_RISK });
+      } else {
+        console.log("Can't find crossed paths");
+        this.setState({ currentState: StateEnum.NO_CONTACT });
+      }
+    });
   }
 
   componentDidMount() {
+    AppState.addEventListener('change', this._handleAppStateChange);
     BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
-    GetStoreData('PARTICIPATE')
+    GetStoreData(PARTICIPATE)
       .then(isParticipating => {
         if (isParticipating === 'true') {
           this.setState({
@@ -57,14 +164,41 @@ class LocationTracking extends Component {
       })
       .catch(error => console.log(error));
   }
+
+  findNewAuthorities() {
+    // TODO: This should pull down the Healtcare Authorities list (see Settings.js)
+    // Then it should look at the GPS extent box of each authority and (if any
+    // of the GPS coordinates change) pop-up a notification that is basically:
+    //    There is a new "Healthcare Authority" for an area where you have
+    //    been.
+    // Tapping that notification asks if they want to Add that Healthcare Authority
+    // under the Settings screen.
+  }
+
   componentWillUnmount() {
+    AppState.removeEventListener('change', this._handleAppStateChange);
+    clearInterval(this.state.timer_intersect);
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackPress);
   }
+
+  // need to check state again if new foreground event
+  // e.g. if user changed location permission
+  _handleAppStateChange = nextAppState => {
+    if (
+      this.state.appState.match(/inactive|background/) &&
+      nextAppState === 'active'
+    ) {
+      console.log('checkIfLocationDisabled');
+      this.checkCurrentState();
+    }
+    this.setState({ appState: nextAppState });
+  };
 
   handleBackPress = () => {
     BackHandler.exitApp(); // works best when the goBack is async
     return true;
   };
+
   export() {
     this.props.navigation.navigate('ExportScreen', {});
   }
@@ -78,22 +212,24 @@ class LocationTracking extends Component {
   }
 
   willParticipate = () => {
-    SetStoreData('PARTICIPATE', 'true').then(() => {
-      LocationServices.start();
-      BroadcastingServices.start();
+    SetStoreData(PARTICIPATE, 'true').then(() => {
+      // Turn of bluetooth for v1
+      //BroadcastingServices.start();
     });
-
     // Check and see if they actually authorized in the system dialog.
     // If not, stop services and set the state to !isLogging
     // Fixes tripleblindmarket/private-kit#129
     BackgroundGeolocation.checkStatus(({ authorization }) => {
       if (authorization === BackgroundGeolocation.AUTHORIZED) {
+        LocationServices.start();
         this.setState({
           isLogging: true,
         });
       } else if (authorization === BackgroundGeolocation.NOT_AUTHORIZED) {
-        LocationServices.stop(this.props.navigation);
-        BroadcastingServices.stop(this.props.navigation);
+        LocationServices.stop();
+        // Turn off bluetooth for v1
+        //BroadcastingServices.stop(this.props.navigation);
+        BackgroundTaskServices.stop();
         this.setState({
           isLogging: false,
         });
@@ -109,299 +245,312 @@ class LocationTracking extends Component {
     this.props.navigation.navigate('LicensesScreen', {});
   }
 
+  settings() {
+    this.props.navigation.navigate('SettingsScreen', {});
+  }
+
   notifications() {
     this.props.navigation.navigate('NotificationScreen', {});
   }
 
   setOptOut = () => {
     LocationServices.stop(this.props.navigation);
-    BroadcastingServices.stop(this.props.navigation);
+    // Turn of bluetooth for v1
+    //BroadcastingServices.stop(this.props.navigation);
     this.setState({
       isLogging: false,
     });
   };
 
+  getBackground() {
+    if (this.state.currentState === StateEnum.AT_RISK) {
+      return BackgroundImageAtRisk;
+    }
+    return BackgroundImage;
+  }
+
+  getSettings() {
+    return (
+      <TouchableOpacity
+        style={styles.settingsContainer}
+        onPress={() => {
+          this.props.navigation.navigate('SettingsScreen');
+          // THIS IS FOR TESTING - DELETE LATER
+          // switch (this.state.currentState) {
+          //   case StateEnum.NO_CONTACT:
+          //     this.setState({ isLogging: '', currentState: StateEnum.AT_RISK });
+          //     break;
+          //   case StateEnum.AT_RISK:
+          //     this.setState({ isLogging: '', currentState: StateEnum.UNKNOWN });
+          //     break;
+          //   case StateEnum.UNKNOWN:
+          //     this.setState({
+          //       isLogging: '',
+          //       currentState: StateEnum.NO_CONTACT,
+          //     });
+          //     break;
+          // }
+        }}>
+        <Image resizeMode={'contain'} />
+        <SvgXml
+          style={styles.stateIcon}
+          xml={SettingsGear}
+          width={32}
+          height={32}
+        />
+      </TouchableOpacity>
+    );
+  }
+
+  getPulseIfNeeded() {
+    if (this.state.currentState == StateEnum.NO_CONTACT) {
+      return (
+        <View style={styles.pulseContainer}>
+          <Pulse
+            image={{ exportImage }}
+            color={Colors.PULSE_WHITE}
+            numPulses={3}
+            diameter={400}
+            speed={20}
+            duration={2000}
+          />
+          <StateIcon size={height} status={this.state.currentState} />
+        </View>
+      );
+    }
+    return (
+      <View style={styles.pulseContainer}>
+        <Text>Testdsfafasfsdafasfsadf</Text>
+        <StateIcon size={height} status={this.state.currentState} />
+      </View>
+    );
+  }
+
+  getMainText() {
+    switch (this.state.currentState) {
+      case StateEnum.NO_CONTACT:
+        return (
+          <Text style={styles.mainTextBelow}>
+            {languages.t('label.home_no_contact_header')}
+          </Text>
+        );
+      case StateEnum.AT_RISK:
+        return (
+          <Text style={styles.mainTextAbove}>
+            {languages.t('label.home_at_risk_header')}
+          </Text>
+        );
+      case StateEnum.UNKNOWN:
+        return (
+          <Text style={styles.mainTextBelow}>
+            {languages.t('label.home_unknown_header')}
+          </Text>
+        );
+    }
+  }
+
+  getSubText() {
+    switch (this.state.currentState) {
+      case StateEnum.NO_CONTACT:
+        return languages.t('label.home_no_contact_subtext');
+      case StateEnum.AT_RISK:
+        return languages.t('label.home_at_risk_subtext');
+      case StateEnum.UNKNOWN:
+        return languages.t('label.home_unknown_subtext');
+    }
+  }
+  getSubSubText() {
+    switch (this.state.currentState) {
+      case StateEnum.NO_CONTACT:
+        return null;
+      case StateEnum.AT_RISK:
+        return languages.t('label.home_at_risk_subsubtext');
+      case StateEnum.UNKNOWN:
+        return null;
+    }
+  }
+
+  getCTAIfNeeded() {
+    let buttonLabel;
+    let buttonFunction;
+    if (this.state.currentState === StateEnum.NO_CONTACT) {
+      // TMP HACK FOR MI
+      // buttonLabel = 'label.home_MASSIVE_HACK';
+      // buttonFunction = () => {
+      //   this.props.navigation.navigate('MapLocation');
+      // };
+      return;
+    } else if (this.state.currentState === StateEnum.AT_RISK) {
+      buttonLabel = languages.t('label.home_next_steps');
+      buttonFunction = () => {
+        this.props.navigation.navigate('NotificationScreen');
+      };
+    } else if (this.state.currentState === StateEnum.UNKNOWN) {
+      buttonLabel = languages.t('label.home_enable_location');
+      buttonFunction = () => {
+        openSettings();
+      };
+    }
+    return (
+      <View style={styles.buttonContainer}>
+        <ButtonWrapper
+          title={buttonLabel}
+          onPress={() => {
+            buttonFunction();
+          }}
+          buttonColor={Colors.BLUE_BUTTON}
+          bgColor={Colors.WHITE}
+        />
+      </View>
+    );
+  }
+
+  getMayoInfoPressed() {
+    Linking.openURL(languages.t('label.home_mayo_link_URL'));
+  }
+
   render() {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.main}>
-          {/* A modal menu. Currently only used for license info */}
-          <Menu
-            style={{
-              position: 'absolute',
-              alignSelf: 'flex-end',
-              zIndex: 10,
-            }}>
-            <MenuTrigger style={{ marginTop: 14 }}>
-              <Image
-                source={kebabIcon}
-                style={{
-                  width: 15,
-                  height: 28,
-                  padding: 14,
-                }}
-              />
-            </MenuTrigger>
-            <MenuOptions>
-              <MenuOption
-                onSelect={() => {
-                  this.licenses();
-                }}>
-                <Text style={styles.menuOptionText}>Licenses</Text>
-              </MenuOption>
-              <MenuOption
-                onSelect={() => {
-                  this.notifications();
-                }}>
-                <Text style={styles.menuOptionText}>Notifications</Text>
-              </MenuOption>
-            </MenuOptions>
-          </Menu>
-          <Text style={styles.headerTitle}>
-            {languages.t('label.private_kit')}
-          </Text>
-
-          <View style={styles.buttonsAndLogoView}>
-            {this.state.isLogging ? (
-              <>
-                <Image
-                  source={pkLogo}
-                  style={{
-                    width: 132,
-                    height: 164.4,
-                    alignSelf: 'center',
-                    marginTop: 12,
-                  }}
-                />
-                <TouchableOpacity
-                  onPress={() => this.setOptOut()}
-                  style={styles.stopLoggingButtonTouchable}>
-                  <Text style={styles.stopLoggingButtonText}>
-                    {languages.t('label.stop_logging')}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => this.overlap()}
-                  style={styles.startLoggingButtonTouchable}>
-                  <Text style={styles.startLoggingButtonText}>
-                    {languages.t('label.overlap')}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Image
-                  source={pkLogo}
-                  style={{
-                    width: 132,
-                    height: 164.4,
-                    alignSelf: 'center',
-                    marginTop: 12,
-                    opacity: 0.3,
-                  }}
-                />
-                <TouchableOpacity
-                  onPress={() => this.willParticipate()}
-                  style={styles.startLoggingButtonTouchable}>
-                  <Text style={styles.startLoggingButtonText}>
-                    {languages.t('label.start_logging')}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {this.state.isLogging ? (
-              <Text style={styles.sectionDescription}>
-                {languages.t('label.logging_message')}
-              </Text>
-            ) : (
-              <Text style={styles.sectionDescription}>
-                {languages.t('label.not_logging_message')}
-              </Text>
-            )}
+      <ImageBackground
+        source={this.getBackground()}
+        style={styles.backgroundImage}>
+        <StatusBar
+          barStyle='light-content'
+          backgroundColor='transparent'
+          translucent={true}
+        />
+        {this.getPulseIfNeeded()}
+        <View style={styles.mainContainer}>
+          <View style={styles.contentContainer}>
+            {this.getMainText()}
+            <Text style={styles.subsubheaderText}>{this.getSubSubText()}</Text>
+            <Text style={styles.subheaderText}>{this.getSubText()}</Text>
+            {this.getCTAIfNeeded()}
           </View>
-
-          <View style={styles.actionButtonsView}>
-            <TouchableOpacity
-              onPress={() => this.import()}
-              style={styles.actionButtonsTouchable}>
-              <Image
-                style={styles.actionButtonImage}
-                source={exportImage}
-                resizeMode={'contain'}
-              />
-              <Text style={styles.actionButtonText}>
-                {languages.t('label.import')}
+        </View>
+        <View>
+          <TouchableOpacity
+            onPress={this.getMayoInfoPressed.bind(this)}
+            style={styles.mayoInfoRow}>
+            <View style={styles.mayoInfoContainer}>
+              <Text
+                style={styles.mainMayoHeader}
+                onPress={() =>
+                  Linking.openURL(languages.t('label.home_mayo_link_URL'))
+                }>
+                {languages.t('label.home_mayo_link_heading')}
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => this.export()}
-              style={styles.actionButtonsTouchable}>
-              <Image
-                style={[
-                  styles.actionButtonImage,
-                  { transform: [{ rotate: '180deg' }] },
-                ]}
-                source={exportImage}
-                resizeMode={'contain'}
-              />
-              <Text style={styles.actionButtonText}>
-                {languages.t('label.export')}
+              <Text
+                style={styles.mainMayoSubtext}
+                onPress={() =>
+                  Linking.openURL(languages.t('label.home_mayo_link_URL'))
+                }>
+                {languages.t('label.home_mayo_link_label')}
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => this.news()}
-              style={styles.actionButtonsTouchable}>
-              <Image
-                style={styles.actionButtonImage}
-                source={news}
-                resizeMode={'contain'}
-              />
-              <Text style={styles.actionButtonText}>
-                {languages.t('label.news')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.footer}>
-            <Text
-              style={[
-                styles.sectionDescription,
-                { textAlign: 'center', paddingTop: 15 },
-              ]}>
-              {languages.t('label.url_info')}{' '}
-            </Text>
-            <Text
-              style={[
-                styles.sectionDescription,
-                { color: 'blue', textAlign: 'center', marginTop: 0 },
-              ]}
-              onPress={() => Linking.openURL('https://privatekit.mit.edu')}>
-              {languages.t('label.private_kit_url')}
-            </Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+            </View>
+            <View style={styles.arrowContainer}>
+              <Image source={foreArrow} style={this.arrow} />
+            </View>
+          </TouchableOpacity>
+        </View>
+        {this.getSettings()}
+      </ImageBackground>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  // Container covers the entire screen
-  container: {
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    color: colors.PRIMARY_TEXT,
-    backgroundColor: colors.WHITE,
   },
-  headerTitle: {
-    textAlign: 'center',
-    fontSize: 38,
-    padding: 0,
-    fontFamily: 'OpenSans-Bold',
-  },
-  subHeaderTitle: {
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 22,
-    padding: 5,
-  },
-  main: {
+  mainContainer: {
+    top: '50%',
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+  },
+  contentContainer: {
+    width: width * 0.65,
+    flex: 1,
+    alignSelf: 'center',
+  },
+  settingsContainer: {
+    position: 'absolute',
+    top: 0,
+    marginTop: '14%',
+    marginRight: '5%',
+    alignSelf: 'flex-end',
+  },
+  buttonContainer: {
+    top: '9%',
+  },
+  pulseContainer: {
+    position: 'absolute',
+    resizeMode: 'contain',
+    top: '-13%',
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    width: '80%',
   },
-  buttonsAndLogoView: {
-    flex: 6,
-    justifyContent: 'space-around',
+  mainTextAbove: {
+    textAlign: 'center',
+    lineHeight: 34,
+    marginTop: -210,
+    marginBottom: 125,
+    color: Colors.WHITE,
+    fontSize: 28,
+    fontFamily: fontFamily.primaryMedium,
   },
-  actionButtonsView: {
-    width: width * 0.7866,
+  mainTextBelow: {
+    textAlign: 'center',
+    lineHeight: 34,
+    color: Colors.WHITE,
+    fontSize: 26,
+    fontFamily: fontFamily.primaryMedium,
+  },
+  subheaderText: {
+    marginTop: 120,
+    textAlign: 'center',
+    lineHeight: 24.5,
+    color: Colors.WHITE,
+    fontSize: 18,
+    fontFamily: fontFamily.primaryRegular,
+  },
+  subsubheaderText: {
+    marginTop: -115,
+    textAlign: 'center',
+    lineHeight: 24.5,
+    color: Colors.WHITE,
+    fontSize: 16,
+    fontFamily: fontFamily.primaryLight,
+    marginBottom: '8%',
+  },
+  mayoInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    flex: 2,
-    alignItems: 'center',
-    marginBottom: -10,
   },
-  footer: {
-    textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingBottom: 10,
-    justifyContent: 'flex-end',
+  mayoInfoContainer: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignContent: 'flex-end',
+    padding: 20,
   },
-  sectionDescription: {
-    fontSize: 12,
-    lineHeight: 24,
-    fontFamily: 'OpenSans-Regular',
-    marginLeft: 10,
-    marginRight: 10,
+  mainMayoHeader: {
+    textAlign: 'left',
+    color: Colors.MISCHKA,
+    fontSize: 18,
+    fontFamily: fontFamily.primaryBold,
   },
-  startLoggingButtonTouchable: {
-    borderRadius: 12,
-    backgroundColor: '#665eff',
-    height: 52,
+  mainMayoSubtext: {
+    textAlign: 'left',
+    color: Colors.MISCHKA,
+    fontSize: 18,
+    fontFamily: fontFamily.primaryRegular,
+  },
+  arrowContainer: {
     alignSelf: 'center',
-    width: width * 0.7866,
-    justifyContent: 'center',
-  },
-  startLoggingButtonText: {
-    fontFamily: 'OpenSans-Bold',
-    fontSize: 14,
-    lineHeight: 19,
-    letterSpacing: 0,
-    textAlign: 'center',
-    color: '#ffffff',
-  },
-  stopLoggingButtonTouchable: {
-    borderRadius: 12,
-    backgroundColor: '#fd4a4a',
-    height: 52,
-    alignSelf: 'center',
-    width: width * 0.7866,
-    justifyContent: 'center',
-  },
-  stopLoggingButtonText: {
-    fontFamily: 'OpenSans-Bold',
-    fontSize: 14,
-    lineHeight: 19,
-    letterSpacing: 0,
-    textAlign: 'center',
-    color: '#ffffff',
-  },
-  actionButtonsTouchable: {
-    height: 76,
-    borderRadius: 8,
-    backgroundColor: '#454f63',
-    width: width * 0.23,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionButtonImage: {
-    height: 21.6,
-    width: 32.2,
-  },
-  actionButtonText: {
-    opacity: 0.56,
-    fontFamily: 'OpenSans-Bold',
-    fontSize: 12,
-    lineHeight: 17,
-    letterSpacing: 0,
-    textAlign: 'center',
-    color: '#ffffff',
-    marginTop: 6,
-  },
-  menuOptionText: {
-    fontFamily: 'OpenSans-Regular',
-    fontSize: 14,
-    padding: 10,
+    paddingRight: 20,
   },
 });
 
