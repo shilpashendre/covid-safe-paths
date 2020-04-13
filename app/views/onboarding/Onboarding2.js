@@ -37,9 +37,9 @@ const Onboarding = props => {
       </View>
       <View style={styles.footerContainer}>
         <ButtonWrapper
-          title={languages.t('label.launch_next')}
+          title={languages.t('label.launch_set_up_phone')}
           onPress={() => {
-            props.navigation.replace('Onboarding3');
+            props.navigation.replace('Onboarding5');
           }}
           buttonColor={Colors.WHITE}
           bgColor={Colors.VIOLET_BUTTON}

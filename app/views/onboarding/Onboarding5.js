@@ -63,6 +63,7 @@ class Onboarding extends Component {
     this.state = {
       notificationPermission: PermissionStatusEnum.UNKNOWN,
       locationPermission: PermissionStatusEnum.UNKNOWN,
+      bluetoothPermission: PermissionStatusEnum.UNKNOWN,
     };
     this.checkLocationStatus();
     this.checkNotificationStatus();
@@ -74,6 +75,10 @@ class Onboarding extends Component {
 
   isNotificationChecked() {
     return this.state.notificationPermission !== PermissionStatusEnum.UNKNOWN;
+  }
+
+  isBLEChecked() {
+    return this.state.bluetoothPermission !== PermissionStatusEnum.UNKNOWN;
   }
 
   checkLocationStatus() {
@@ -105,6 +110,19 @@ class Onboarding extends Component {
       });
   }
 
+  checkBLEStatus() {
+    if (isPlatformiOS()) {
+      this.setState({
+        bluetoothPermission: PermissionStatusEnum.UNKNOWN,
+      })
+    }
+    else {
+      this.setState({
+        bluetoothPermission: PermissionStatusEnum.UNKNOWN,
+      })
+    }
+  }
+
   checkNotificationStatus() {
     checkNotifications().then(({ status }) => {
       switch (status) {
@@ -121,6 +139,12 @@ class Onboarding extends Component {
           break;
       }
     });
+  }
+
+  requestBLE () {
+    this.setState({
+      bluetoothPermission: PermissionStatusEnum.GRANTED,
+    })
   }
 
   requestLocation() {
@@ -172,6 +196,8 @@ class Onboarding extends Component {
       this.requestLocation();
     } else if (!this.isNotificationChecked()) {
       this.requestNotification();
+    } else if (!this.isBLEChecked()) {
+      this.requestBLE();
     } else {
       SetStoreData(PARTICIPATE, 'true'); // replaces "start" button
       this.props.navigation.replace('LocationTrackingScreen');
@@ -183,13 +209,15 @@ class Onboarding extends Component {
       return languages.t('label.launch_location_header');
     } else if (!this.isNotificationChecked()) {
       return languages.t('label.launch_notif_header');
+    } else if (!this.isBLEChecked()) {
+      return languages.t('label.launch_bluetooth_header');
     } else {
       return languages.t('label.launch_done_header');
     }
   }
 
   getTitleTextView() {
-    if (!this.isLocationChecked() || !this.isNotificationChecked()) {
+    if (!this.isLocationChecked() || !this.isNotificationChecked() || !this.isBLEChecked()) {
       return <Text style={styles.headerText}>{this.getTitleText()}</Text>;
     } else {
       return <Text style={styles.bigHeaderText}>{this.getTitleText()}</Text>;
@@ -234,11 +262,26 @@ class Onboarding extends Component {
     return;
   }
 
+  getBLEPermissions() {
+    return (
+      <>
+        <PermissionDescription
+          title={languages.t('label.launch_bluetooth_access')}
+          status={this.state.bluetoothPermission}
+        />
+        <View style={styles.divider}></View>
+      </>
+    )
+  }
+
+
   getButtonText() {
     if (!this.isLocationChecked()) {
       return languages.t('label.launch_enable_location');
     } else if (!this.isNotificationChecked()) {
       return languages.t('label.launch_enable_notif');
+    } else if (!this.isBLEChecked()) {
+      return languages.t('label.launch_enable_ble');
     } else {
       return languages.t('label.launch_finish_set_up');
     }
@@ -260,6 +303,7 @@ class Onboarding extends Component {
             <View style={styles.statusContainer}>
               {this.getLocationPermission()}
               {this.getNotificationsPermissionIfIOS()}
+              {this.getBLEPermissions()}
               <View style={styles.spacer}></View>
             </View>
           </View>

@@ -17,8 +17,6 @@ import NotificationScreen from './views/Notification';
 import MapLocation from './views/MapLocation';
 import Onboarding1 from './views/onboarding/Onboarding1';
 import Onboarding2 from './views/onboarding/Onboarding2';
-import Onboarding3 from './views/onboarding/Onboarding3';
-import Onboarding4 from './views/onboarding/Onboarding4';
 import Onboarding5 from './views/onboarding/Onboarding5';
 import AboutScreen from './views/About';
 import ChooseProviderScreen from './views/ChooseProvider';
@@ -79,16 +77,6 @@ class Entry extends Component {
           <Stack.Screen
             name='Onboarding2'
             component={Onboarding2}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name='Onboarding3'
-            component={Onboarding3}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name='Onboarding4'
-            component={Onboarding4}
             options={{ headerShown: false }}
           />
           <Stack.Screen

@@ -176,14 +176,6 @@ class SettingsScreen extends Component {
               )}
               <View style={styles.divider} />
               {this.getSettingRow(
-                languages.t('label.visualize_title'),
-                this.visualizeDataPressed,
-                null,
-                null,
-                languages.t('label.visualize_subtitle'),
-              )}
-              <View style={styles.divider} />
-              {this.getSettingRow(
                 languages.t('label.news_title'),
                 this.newsButtonPressed,
                 null,
@@ -210,23 +202,7 @@ class SettingsScreen extends Component {
           </View>
           <View style={styles.fullDivider} />
 
-          <View style={styles.spacer} />
-
-          <View style={styles.fullDivider} />
-          <View style={styles.mainContainer}>
-            <View style={styles.section}>
-              {this.getSettingRow(
-                languages.t('label.about_title'),
-                this.aboutButtonPressed,
-              )}
-              <View style={styles.divider} />
-              {this.getSettingRow(
-                languages.t('label.legal_page_title'),
-                this.licensesButtonPressed,
-              )}
-            </View>
-          </View>
-          <View style={styles.fullDivider} />
+          
         </ScrollView>
       </NavigationBarWrapper>
     );
