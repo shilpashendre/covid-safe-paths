@@ -94,10 +94,10 @@ class NewsScreen extends Component {
         let arr = [];
 
         // TODO: using this as test data for now without assigning
-        arr.push({
+        /*arr.push({
           name: 'Haitian Ministry of Health',
           url: 'https://wmcelroy.wixsite.com/covidhaiti/kat',
-        });
+        });*/
         arr.push(this.state.default_news);
 
         console.log('name_news:', arr);
