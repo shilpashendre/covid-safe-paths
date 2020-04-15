@@ -79,11 +79,15 @@ function OverlapScreen(props) {
   const { navigate } = useNavigation();
   const mapView = useRef();
 
-  props.navigation.setOptions({
-    headerShown: false,
-    title: 'Map',
-    headerBackTitle: '',
-  });
+  try {
+    props.navigation.setOptions({
+      headerShown: false,
+      title: 'Map',
+      headerBackTitle: '',
+    });
+  } catch (error) {
+    console.log(error);
+  }
 
   async function getOverlap() {
     try {

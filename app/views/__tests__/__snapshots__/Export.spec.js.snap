@@ -120,7 +120,7 @@ Array [
                 }
               }
             >
-              Share location history
+              Export location history
             </Text>
             <Text
               style={
@@ -133,7 +133,7 @@ Array [
                 }
               }
             >
-              If you test positive for COVID-19, please do your part by sharing your location history with local authorities.
+              
             </Text>
             <Text
               style={
@@ -146,7 +146,7 @@ Array [
                 }
               }
             >
-              Location is shared as a simple list of times and places, no additional information.
+              Location is exported as a simple list of times and places, no additional information.
             </Text>
             <View
               accessible={true}
@@ -181,7 +181,7 @@ Array [
                   }
                 }
               >
-                Share location data
+                Export location history
               </Text>
               <SvgXml
                 style={

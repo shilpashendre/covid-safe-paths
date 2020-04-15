@@ -94,6 +94,59 @@ exports[`renders correctly 1`] = `
         <View
           style={
             Object {
+              "backgroundColor": "#FFF",
+              "flexDirection": "column",
+              "width": "100%",
+            }
+          }
+        >
+          <View
+            style={
+              Object {
+                "alignSelf": "center",
+                "backgroundColor": "#FFF",
+                "flexDirection": "column",
+                "width": "87.5%",
+              }
+            }
+          >
+            <View
+              accessible={true}
+              focusable={true}
+              isTVSelectable={true}
+              style={
+                Object {
+                  "backgroundColor": "#FFF",
+                  "flexDirection": "column",
+                  "justifyContent": "space-between",
+                  "opacity": 1,
+                  "paddingVertical": "5%",
+                }
+              }
+            >
+              <Text
+                style={
+                  Array [
+                    Object {
+                      "color": "#3C4ED8",
+                      "fontFamily": "IBMPlexSans",
+                      "fontSize": 18,
+                    },
+                    Object {
+                      "color": "#32A852",
+                      "fontFamily": "IBMPlexSans-Bold",
+                    },
+                  ]
+                }
+              >
+                Start Logging
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View
+          style={
+            Object {
               "backgroundColor": "#A5AFFB",
               "height": 1,
               "width": "100%",
@@ -177,7 +230,7 @@ exports[`renders correctly 1`] = `
                   }
                 }
               >
-                To see if you encountered someone with COVID-19 prior to downloading this app, you can import your personal location history.
+                To see if you encountered someone prior to downloading this app, you can import your personal location history.
               </Text>
             </View>
             <View
@@ -290,7 +343,7 @@ exports[`renders correctly 1`] = `
                   }
                 }
               >
-                Safe Paths has no affiliation with Google and never shares your data.
+                PrivateKit has no affiliation with Google and never shares your data.
               </Text>
             </View>
           </View>
@@ -368,7 +421,7 @@ exports[`renders correctly 1`] = `
                   ]
                 }
               >
-                Choose health authority
+                Choose information source
               </Text>
               <Text
                 style={
@@ -381,7 +434,7 @@ exports[`renders correctly 1`] = `
                   }
                 }
               >
-                To be informed of exposures you will need to subscribe to a health authority.
+                To be informed of exposures you will need to subscribe to a information authority.
               </Text>
             </View>
             <View
@@ -434,7 +487,7 @@ exports[`renders correctly 1`] = `
                   }
                 }
               >
-                Read about the latest COVID updates from your health authority and in general.
+                Read about the latest updates from your information authority and in general.
               </Text>
             </View>
             <View
@@ -474,7 +527,7 @@ exports[`renders correctly 1`] = `
                   ]
                 }
               >
-                Exposure history
+                Visualize data streams
               </Text>
               <Text
                 style={
@@ -487,7 +540,7 @@ exports[`renders correctly 1`] = `
                   }
                 }
               >
-                Understand your personal exposure based on information shared by health authorities.
+                Compare your own trail with publicly available datasets
               </Text>
             </View>
             <View
@@ -527,7 +580,7 @@ exports[`renders correctly 1`] = `
                   ]
                 }
               >
-                Share location history
+                Intersection history
               </Text>
               <Text
                 style={
@@ -540,84 +593,7 @@ exports[`renders correctly 1`] = `
                   }
                 }
               >
-                Your private data can be transferred to health authorities, backed up, or otherwise shared.
-              </Text>
-            </View>
-          </View>
-        </View>
-        <View
-          style={
-            Object {
-              "backgroundColor": "#A5AFFB",
-              "height": 1,
-              "width": "100%",
-            }
-          }
-        />
-        <View
-          style={
-            Object {
-              "marginVertical": "2%",
-            }
-          }
-        />
-        <View
-          style={
-            Object {
-              "backgroundColor": "#A5AFFB",
-              "height": 1,
-              "width": "100%",
-            }
-          }
-        />
-        <View
-          style={
-            Object {
-              "backgroundColor": "#FFF",
-              "flexDirection": "column",
-              "width": "100%",
-            }
-          }
-        >
-          <View
-            style={
-              Object {
-                "alignSelf": "center",
-                "backgroundColor": "#FFF",
-                "flexDirection": "column",
-                "width": "87.5%",
-              }
-            }
-          >
-            <View
-              accessible={true}
-              focusable={true}
-              isTVSelectable={true}
-              style={
-                Object {
-                  "backgroundColor": "#FFF",
-                  "flexDirection": "column",
-                  "justifyContent": "space-between",
-                  "opacity": 1,
-                  "paddingVertical": "5%",
-                }
-              }
-            >
-              <Text
-                style={
-                  Array [
-                    Object {
-                      "color": "#3C4ED8",
-                      "fontFamily": "IBMPlexSans",
-                      "fontSize": 18,
-                    },
-                    Object {
-                      "color": "#3C4ED8",
-                    },
-                  ]
-                }
-              >
-                About
+                Understand your personal intersection based on data shared by information authorities.
               </Text>
             </View>
             <View
@@ -652,11 +628,25 @@ exports[`renders correctly 1`] = `
                     },
                     Object {
                       "color": "#3C4ED8",
+                      "fontFamily": "IBMPlexSans-Bold",
                     },
                   ]
                 }
               >
-                Legal
+                Export location history
+              </Text>
+              <Text
+                style={
+                  Object {
+                    "backgroundColor": "#FFF",
+                    "color": "#3C4ED8",
+                    "fontFamily": undefined,
+                    "fontSize": 16,
+                    "width": "87.5%",
+                  }
+                }
+              >
+                Your private data can be transferred to information authorities, backed up, or otherwise shared.
               </Text>
             </View>
           </View>
