@@ -79,7 +79,7 @@ export class LocationData {
       }
 
       // Backfill the stationary points, if available
-      // The assumption is that if we see a gap in the data, and the 
+      // The assumption is that if we see a gap in the data, and the
       // device hasn't moved significantly, then we can fill in the missing data
       // with the current location.  This makes it easier for a health authority
       // person to have a set of locations over time, and they can manually
@@ -98,7 +98,10 @@ export class LocationData {
         // Actually do the backfill if the current point is nearby the previous
         // point and the time is within the maximum time to backfill.
         let lastRecordedTime = lastLocationArray['time'];
-        if (areCurrentPreviousNearby && unixtimeUTC - lastRecordedTime < this.maxBackfillTime) {
+        if (
+          areCurrentPreviousNearby &&
+          unixtimeUTC - lastRecordedTime < this.maxBackfillTime
+        ) {
           for (
             let newTS = lastRecordedTime + this.locationInterval;
             newTS < unixtimeUTC - this.locationInterval;
