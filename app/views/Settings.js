@@ -43,27 +43,29 @@ class SettingsScreen extends Component {
   };
 
   willParticipate = () => {
-    SetStoreData('PARTICIPATE', 'true').then(() => {
-      LocationServices.start();
-      BroadcastingServices.start();
-    });
+    if (!this.state.isLogging) {
+      SetStoreData('PARTICIPATE', 'true').then(() => {
+        LocationServices.start();
+        BroadcastingServices.start();
+      });
 
-    // Check and see if they actually authorized in the system dialog.
-    // If not, stop services and set the state to !isLogging
-    // Fixes tripleblindmarket/private-kit#129
-    BackgroundGeolocation.checkStatus(({ authorization }) => {
-      if (authorization === BackgroundGeolocation.AUTHORIZED) {
-        this.setState({
-          isLogging: true,
-        });
-      } else if (authorization === BackgroundGeolocation.NOT_AUTHORIZED) {
-        LocationServices.stop(this.props.navigation);
-        BroadcastingServices.stop(this.props.navigation);
-        this.setState({
-          isLogging: false,
-        });
-      }
-    });
+      // Check and see if they actually authorized in the system dialog.
+      // If not, stop services and set the state to !isLogging
+      // Fixes tripleblindmarket/private-kit#129
+      BackgroundGeolocation.checkStatus(({ authorization }) => {
+        if (authorization === BackgroundGeolocation.AUTHORIZED) {
+          this.setState({
+            isLogging: true,
+          });
+        } else if (authorization === BackgroundGeolocation.NOT_AUTHORIZED) {
+          LocationServices.stop(this.props.navigation);
+          BroadcastingServices.stop(this.props.navigation);
+          this.setState({
+            isLogging: false,
+          });
+        }
+      });
+    }
   };
 
   setOptOut = () => {
