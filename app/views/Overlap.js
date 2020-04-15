@@ -1,24 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
-  ScrollView,
   Linking,
   View,
   Text,
-  Image,
   Dimensions,
   TouchableOpacity,
   BackHandler,
-  StatusBar,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import WebView from 'react-native-webview';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import RNFetchBlob from 'rn-fetch-blob';
-import Share from 'react-native-share';
-import colors from '../constants/colors';
-import Button from '../components/Button';
+import NavigationInfoBarWrapper from '../components/NavigationInfoBarWrapper';
 import { GetStoreData } from '../helpers/General';
 import greenMarker from '../assets/images/user-green.png';
 import languages from '../locales/languages';
@@ -30,7 +23,6 @@ import { LOCATION_DATA } from '../constants/storage';
 
 const width = Dimensions.get('window').width;
 
-const base64 = RNFetchBlob.base64;
 // This data source was published in the Lancet, originally mentioned in
 // this article:
 //    https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30119-5/fulltext
@@ -88,7 +80,7 @@ function OverlapScreen(props) {
   const mapView = useRef();
 
   props.navigation.setOptions({
-    headerShown: true,
+    headerShown: false,
     title: 'Map',
     headerBackTitle: '',
   });
@@ -146,16 +138,6 @@ function OverlapScreen(props) {
             latitudeDelta: 0.10922,
             longitudeDelta: 0.20421,
           });
-          populateMarkers([
-            {
-              coordinate: {
-                latitude,
-                longitude,
-              },
-              key: 0,
-              color: '#f26964',
-            },
-          ]);
         }
       });
     } catch (error) {
@@ -268,7 +250,7 @@ function OverlapScreen(props) {
               latitude: latitude,
               longitude: longitude,
             },
-            radius: 3 * count,
+            radius: 5 * count,
           };
           circles.push(circle);
         }
@@ -310,64 +292,66 @@ function OverlapScreen(props) {
   // health authorities. If additional data are available from reliable online reports, they are included.
   return (
     <>
-      <StatusBar
-        barStyle='dark-content'
-        backgroundColor='transparent'
-        translucent
-      />
-      <View style={styles.main}>
-        <MapView
-          ref={mapView}
-          provider={PROVIDER_GOOGLE}
-          style={styles.map}
-          initialRegion={initialRegion}
-          customMapStyle={customMapStyles}>
-          {markers.map(marker => (
-            <Marker
-              key={marker.key}
-              coordinate={marker.coordinate}
-              title={marker.title}
-              description={marker.description}
-              tracksViewChanges={false}
-              image={greenMarker}
-            />
-          ))}
-          {circles.map(circle => (
-            <CustomCircle
-              key={circle.key}
-              center={circle.center}
-              radius={circle.radius}
-              fillColor='rgba(245, 19, 19, 0.4)'
-              zIndex={2}
-              strokeWidth={0}
-            />
-          ))}
-        </MapView>
-        {/*<View style={styles.main}>
-          <TouchableOpacity
-            style={styles.buttonTouchable}
-            onPress={downloadAndPlot}
-            disabled={showButton.disabled}>
-            {/* If no overlap found, change button text to say so. Temporary solution, replace with something more robust }
-            <Text style={styles.buttonText}>{languages.t(showButton.text)}</Text>
-          </TouchableOpacity>
-          <Text style={styles.sectionDescription}>
-            {languages.t('label.overlap_para_1')}
-          </Text>
-          </View>*/}
-        <View style={styles.footer}>
-          <Text
-            style={[
-              styles.sectionFooter,
-              { textAlign: 'center', paddingTop: 15, color: 'blue' },
-            ]}
-            onPress={() =>
-              Linking.openURL('https://github.com/beoutbreakprepared/nCoV2019')
-            }>
-            {languages.t('label.nCoV2019_url_info')}{' '}
-          </Text>
+      <NavigationInfoBarWrapper
+        title={languages.t('label.overlap_title')}
+        onBackPress={backToMain.bind()}>
+        <View style={styles.main}>
+          <MapView
+            ref={mapView}
+            provider={PROVIDER_GOOGLE}
+            style={styles.map}
+            customMapStyle={customMapStyles}>
+            {markers.map(marker => (
+              <Marker
+                key={marker.key}
+                coordinate={marker.coordinate}
+                title={marker.title}
+                description={marker.description}
+                image={greenMarker}
+              />
+            ))}
+            {circles.map(circle => (
+              <CustomCircle
+                key={circle.key}
+                center={circle.center}
+                radius={circle.radius}
+                fillColor='rgba(245, 19, 19, 0.4)'
+                zIndex={2}
+                strokeWidth={0}
+              />
+            ))}
+          </MapView>
+          {
+            <View style={styles.mapFo}>
+              <TouchableOpacity
+                style={styles.buttonTouchable}
+                onPress={downloadAndPlot}
+                disabled={showButton.disabled}>
+                <Text style={styles.buttonText}>
+                  {languages.t(showButton.text)}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.sectionDescription}>
+                {languages.t('label.overlap_para_1')}
+              </Text>
+            </View>
+          }
+          <View style={styles.footer}>
+            <Text
+              style={[
+                styles.sectionFooter,
+                { textAlign: 'center', paddingTop: 15, color: 'blue' },
+              ]}
+              onPress={() =>
+                Linking.openURL(
+                  'https://github.com/beoutbreakprepared/nCoV2019',
+                )
+              }>
+              {languages.t('label.nCoV2019_url_info')}{' '}
+            </Text>
+          </View>
         </View>
-      </View>
+      </NavigationInfoBarWrapper>
     </>
   );
 }
@@ -386,6 +370,9 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  description: {
+    flex: 0.5,
   },
   buttonTouchable: {
     borderRadius: 12,
@@ -438,7 +425,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     padding: 4,
-    paddingBottom: 10,
+    paddingBottom: 5,
   },
 });
 

@@ -184,6 +184,14 @@ class SettingsScreen extends Component {
               )}
               <View style={styles.divider} />
               {this.getSettingRow(
+                languages.t('label.overlap_title'),
+                this.visualizeDataPressed,
+                null,
+                null,
+                languages.t('label.overlap_subtitle'),
+              )}
+              <View style={styles.divider} />
+              {this.getSettingRow(
                 languages.t('label.event_history_title'),
                 this.eventHistoryButtonPressed,
                 null,
@@ -201,8 +209,6 @@ class SettingsScreen extends Component {
             </View>
           </View>
           <View style={styles.fullDivider} />
-
-          
         </ScrollView>
       </NavigationBarWrapper>
     );
