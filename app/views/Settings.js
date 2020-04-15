@@ -20,12 +20,16 @@ import Colors from '../constants/colors';
 import fontFamily from './../constants/fonts';
 import googleMapsIcon from './../assets/svgs/google-maps-logo';
 import { SvgXml } from 'react-native-svg';
+import { GetStoreData, SetStoreData } from '../helpers/General';
+import LocationServices from '../services/LocationService';
+import BroadcastingServices from '../services/BroadcastingService';
+import BackgroundGeolocation from '@mauron85/react-native-background-geolocation';
 
 class SettingsScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      //
+      isLogging: '',
     };
   }
 
@@ -38,8 +42,56 @@ class SettingsScreen extends Component {
     return true;
   };
 
+  willParticipate = () => {
+    SetStoreData('PARTICIPATE', 'true').then(() => {
+      LocationServices.start();
+      BroadcastingServices.start();
+    });
+
+    // Check and see if they actually authorized in the system dialog.
+    // If not, stop services and set the state to !isLogging
+    // Fixes tripleblindmarket/private-kit#129
+    BackgroundGeolocation.checkStatus(({ authorization }) => {
+      if (authorization === BackgroundGeolocation.AUTHORIZED) {
+        this.setState({
+          isLogging: true,
+        });
+      } else if (authorization === BackgroundGeolocation.NOT_AUTHORIZED) {
+        LocationServices.stop(this.props.navigation);
+        BroadcastingServices.stop(this.props.navigation);
+        this.setState({
+          isLogging: false,
+        });
+      }
+    });
+  };
+
+  setOptOut = () => {
+    LocationServices.stop(this.props.navigation);
+    BroadcastingServices.stop(this.props.navigation);
+    this.setState({
+      isLogging: false,
+    });
+  };
+
   componentDidMount() {
     BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
+    GetStoreData('PARTICIPATE')
+      .then(isParticipating => {
+        console.log(isParticipating);
+
+        if (isParticipating === 'true') {
+          this.setState({
+            isLogging: true,
+          });
+          this.willParticipate();
+        } else {
+          this.setState({
+            isLogging: false,
+          });
+        }
+      })
+      .catch(error => console.log(error));
   }
 
   componentWillUnmount() {
@@ -149,6 +201,31 @@ class SettingsScreen extends Component {
     );
   }
 
+  getLoggingButton(text, actionListener, icon, color, subtitle) {
+    const renderIcon = () => {
+      return icon ? <SvgXml xml={icon} /> : null;
+    };
+    return (
+      <>
+        <TouchableOpacity
+          onPress={actionListener.bind(this)}
+          style={styles.sectionRowContainer}>
+          <Text
+            style={[
+              styles.settingRowText,
+              { 
+                color: color || Colors.VIOLET_TEXT,
+                fontFamily: fontFamily.primaryBold,
+              },
+            ]}>
+            {text}
+          </Text>
+          {renderIcon()}
+        </TouchableOpacity>
+      </>
+    );
+  }
+
   render() {
     return (
       <NavigationBarWrapper
@@ -157,6 +234,28 @@ class SettingsScreen extends Component {
         <ScrollView contentContainerStyle={styles.contentContainer}>
           {/* TODO FIX THIS - don't remove */}
           {/* <View style={styles.spacer} /> */}
+
+          <View style={styles.mainContainer}>
+            <View style={styles.section}>
+              {this.state.isLogging ? (
+                this.getLoggingButton(
+                  languages.t('label.settings_stop_logging'),
+                  this.setOptOut,
+                  null,
+                  Colors.LOWER_RISK,
+                  "null",
+                )
+              ) : (
+                this.getLoggingButton(
+                  languages.t('label.settings_start_logging'),
+                  this.willParticipate,
+                  null,
+                  Colors.GREEN,
+                  "null",
+                )
+              )}
+            </View>
+          </View>
 
           <View style={styles.fullDivider} />
           <View style={styles.mainContainer}>{this.getMapsImport()}</View>
@@ -184,6 +283,14 @@ class SettingsScreen extends Component {
               )}
               <View style={styles.divider} />
               {this.getSettingRow(
+                languages.t('label.overlap_title'),
+                this.visualizeDataPressed,
+                null,
+                null,
+                languages.t('label.overlap_subtitle'),
+              )}
+              <View style={styles.divider} />
+              {this.getSettingRow(
                 languages.t('label.event_history_title'),
                 this.eventHistoryButtonPressed,
                 null,
@@ -201,8 +308,6 @@ class SettingsScreen extends Component {
             </View>
           </View>
           <View style={styles.fullDivider} />
-
-          
         </ScrollView>
       </NavigationBarWrapper>
     );
