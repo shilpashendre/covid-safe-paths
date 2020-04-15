@@ -201,7 +201,7 @@ class SettingsScreen extends Component {
     );
   }
 
-  getLoggingButton(text, actionListener, icon, color, subtitle) {
+  getLoggingButton(text, actionListener, icon, color) {
     const renderIcon = () => {
       return icon ? <SvgXml xml={icon} /> : null;
     };
@@ -213,7 +213,7 @@ class SettingsScreen extends Component {
           <Text
             style={[
               styles.settingRowText,
-              { 
+              {
                 color: color || Colors.VIOLET_TEXT,
                 fontFamily: fontFamily.primaryBold,
               },
@@ -237,23 +237,19 @@ class SettingsScreen extends Component {
 
           <View style={styles.mainContainer}>
             <View style={styles.section}>
-              {this.state.isLogging ? (
-                this.getLoggingButton(
-                  languages.t('label.settings_stop_logging'),
-                  this.setOptOut,
-                  null,
-                  Colors.LOWER_RISK,
-                  "null",
-                )
-              ) : (
-                this.getLoggingButton(
-                  languages.t('label.settings_start_logging'),
-                  this.willParticipate,
-                  null,
-                  Colors.GREEN,
-                  "null",
-                )
-              )}
+              {this.state.isLogging
+                ? this.getLoggingButton(
+                    languages.t('label.settings_stop_logging'),
+                    this.setOptOut,
+                    null,
+                    Colors.LOWER_RISK,
+                  ) //TODO: add icon
+                : this.getLoggingButton(
+                    languages.t('label.settings_start_logging'),
+                    this.willParticipate,
+                    null,
+                    Colors.GREEN,
+                  )}
             </View>
           </View>
 
