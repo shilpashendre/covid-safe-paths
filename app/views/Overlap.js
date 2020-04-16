@@ -7,6 +7,9 @@ import {
   Dimensions,
   TouchableOpacity,
   BackHandler,
+  Modal,
+  Image,
+  TouchableHighlight,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -75,6 +78,7 @@ function OverlapScreen(props) {
     disabled: false,
     text: show_button_text,
   });
+  const [modalVisible, setModalVisible] = useState(false);
   const [initialRegion, setInitialRegion] = useState(INITIAL_REGION);
   const { navigate } = useNavigation();
   const mapView = useRef();
@@ -266,6 +270,9 @@ function OverlapScreen(props) {
   function backToMain() {
     props.navigation.goBack();
   }
+  function setVisible(){
+    setModalVisible(true);
+  }
 
   function handleBackPress() {
     props.navigation.goBack();
@@ -294,8 +301,63 @@ function OverlapScreen(props) {
     <>
       <NavigationInfoBarWrapper
         title={languages.t('label.overlap_title')}
-        onBackPress={backToMain.bind()}>
+        onBackPress={backToMain.bind()}
+       onInfoTapped={setVisible.bind()}
+      >
         <View style={styles.main}>
+          
+        {
+         modalVisible &&
+            <View style={styles.centeredView}>
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                  Alert.alert("Modal has been closed.");
+                }}
+              >
+                <View style={[styles.overlay, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+                  <View style={styles.modalView}>
+
+                    <TouchableHighlight
+                      style={{ ...styles.openButton }}
+                      onPress={() => {
+                        setModalVisible(!modalVisible);
+                      }}
+                    >
+
+                      <View style={styles.footer}>
+                        <Text style={styles.sectionDescription, { textAlign: 'left', paddingTop: 15, color: '#fff' }}>
+                          {languages.t('label.overlap_para_1')}
+                        </Text>
+
+
+                        <Text
+                          style={[
+                            styles.sectionFooter,
+                            { textAlign: 'center', paddingTop: 15, color: '#63beff' },
+                          ]}
+                          onPress={() =>
+                            Linking.openURL('https://github.com/beoutbreakprepared/nCoV2019')
+                          }>
+                          {languages.t('label.nCoV2019_url_info')}{' '}
+                        </Text>
+                        <View style={{
+                          flexDirection: 'row', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                          <Text style={[styles.okButton]}>{"OK"}</Text>
+                        </View>
+
+                      </View>
+                    </TouchableHighlight>
+                  </View>
+                </View>
+              </Modal>
+            </View> 
+       }
+        
+
           <MapView
             ref={mapView}
             provider={PROVIDER_GOOGLE}
@@ -322,7 +384,7 @@ function OverlapScreen(props) {
             ))}
           </MapView>
           {
-            <View style={styles.mapFo}>
+            <View style={styles.mapFooter}>
               <TouchableOpacity
                 style={styles.buttonTouchable}
                 onPress={downloadAndPlot}
@@ -331,25 +393,9 @@ function OverlapScreen(props) {
                   {languages.t(showButton.text)}
                 </Text>
               </TouchableOpacity>
-              <Text style={styles.sectionDescription}>
-                {languages.t('label.overlap_para_1')}
-              </Text>
+             
             </View>
           }
-          <View style={styles.footer}>
-            <Text
-              style={[
-                styles.sectionFooter,
-                { textAlign: 'center', paddingTop: 15, color: 'blue' },
-              ]}
-              onPress={() =>
-                Linking.openURL(
-                  'https://github.com/beoutbreakprepared/nCoV2019',
-                )
-              }>
-              {languages.t('label.nCoV2019_url_info')}{' '}
-            </Text>
-          </View>
         </View>
       </NavigationInfoBarWrapper>
     </>
@@ -370,6 +416,7 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+    ...StyleSheet.absoluteFillObject
   },
   description: {
     flex: 0.5,
@@ -415,7 +462,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.primaryRegular,
   },
   sectionFooter: {
-    fontSize: 12,
+    fontSize: 14,
     lineHeight: 24,
     marginTop: 12,
     fontFamily: fontFamily.primaryRegular,
@@ -427,6 +474,51 @@ const styles = StyleSheet.create({
     padding: 4,
     paddingBottom: 5,
   },
+  mapFooter:{  
+  flex:1,
+  position:'relative',
+  justifyContent:"flex-end",
+  alignSelf:"center",
+  marginBottom:35
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5
+  },
+  openButton: {
+    backgroundColor: "#333333",
+    borderRadius: 10,
+    padding: 10,
+    elevation: 2
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "#06273F80",
+  },
+  okButton:{
+    paddingTop:5,
+    color:"white"
+  }
 });
 
 const customMapStyles = [
