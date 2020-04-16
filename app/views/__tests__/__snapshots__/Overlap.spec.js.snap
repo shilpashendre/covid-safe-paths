@@ -79,6 +79,7 @@ Array [
             "color": "#FFF",
             "fontFamily": "IBMPlexSans-Medium",
             "fontSize": 26,
+            "height": "85%",
             "position": "absolute",
             "textAlign": "center",
             "width": "100%",
@@ -87,6 +88,43 @@ Array [
       >
         Visualize data streams
       </Text>
+      <View
+        accessible={true}
+        focusable={true}
+        isTVSelectable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          Object {
+            "alignContent": "center",
+            "alignItems": "flex-end",
+            "alignSelf": "center",
+            "justifyContent": "center",
+            "opacity": 1,
+            "position": "relative",
+            "width": "80%",
+          }
+        }
+      >
+        <Image
+          source={
+            Object {
+              "testUri": "../../../app/assets/images/info.png",
+            }
+          }
+          style={
+            Object {
+              "height": 22,
+              "width": 22,
+            }
+          }
+        />
+      </View>
     </View>
     <View
       style={
@@ -201,11 +239,26 @@ Array [
         }
         style={
           Object {
+            "bottom": 0,
             "flex": 1,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
           }
         }
       />
-      <View>
+      <View
+        style={
+          Object {
+            "alignSelf": "center",
+            "flex": 1,
+            "justifyContent": "flex-end",
+            "marginBottom": 35,
+            "position": "relative",
+          }
+        }
+      >
         <View
           accessible={true}
           focusable={true}
@@ -245,53 +298,6 @@ Array [
             Click to view the public dataset
           </Text>
         </View>
-        <Text
-          style={
-            Object {
-              "fontFamily": "IBMPlexSans",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginTop": 12,
-            }
-          }
-        >
-          ➢ The green trail represents your location history
-
-➢ The red circles represent the public dataset in the range of 100KMs around you
-        </Text>
-      </View>
-      <View
-        style={
-          Object {
-            "fontSize": 12,
-            "fontWeight": "600",
-            "padding": 4,
-            "paddingBottom": 5,
-            "textAlign": "center",
-          }
-        }
-      >
-        <Text
-          onPress={[Function]}
-          style={
-            Array [
-              Object {
-                "fontFamily": "IBMPlexSans",
-                "fontSize": 12,
-                "lineHeight": 24,
-                "marginTop": 12,
-              },
-              Object {
-                "color": "blue",
-                "paddingTop": 15,
-                "textAlign": "center",
-              },
-            ]
-          }
-        >
-          For more information on the dataset for this map
-           
-        </Text>
       </View>
     </View>
   </RCTSafeAreaView>,
